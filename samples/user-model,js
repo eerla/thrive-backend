@@ -1,0 +1,10 @@
+// sample users model
+const user = {
+   token: 'ExpoPushToken[...]',
+   name: 'John Doe',
+    gender: 'Male',
+    age: 25,
+    occupation: 'Engineer',
+    language: 'English',
+    frequency: 2
+}
