@@ -4,7 +4,7 @@
 
 This project is a server application built using Node.js and Express that sends personalized motivational quotes to users via push notifications. The application leverages the OpenAI API to generate motivational quotes tailored to each user's profile, including their name, gender, age, occupation, and preferred language. Notifications are sent using the Expo push notification service.
 
-##Frontend code GitHub repository - https://github.com/eerla/Thrive
+## Frontend code GitHub repository - https://github.com/eerla/Thrive
 
 ## Features
 
