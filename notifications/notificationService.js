@@ -1,11 +1,13 @@
 const { Expo } = require('expo-server-sdk');
 const { fetchMotivationalQuote } = require('../services/openAIService');
+const createLoggerWithFilename = require('../services/logService'); // Import the logger
+const logger = createLoggerWithFilename(__filename);
 
 let expo = new Expo();
 
 // Function to fetch motivational quote and send notification
 async function sendMotivationalQuoteNotification(token, name, gender, age, occupation, language) {
-    console.log('calling openai service');
+    logger.info('calling openai service');
     const quote = await fetchMotivationalQuote(name, gender, age, occupation, language);
 
     const message = {
@@ -23,7 +25,7 @@ async function sendMotivationalQuoteNotification(token, name, gender, age, occup
             let ticketChunk = await expo.sendPushNotificationsAsync(chunk);
             tickets.push(...ticketChunk);
         } catch (error) {
-            console.error(error);
+            logger.error('Error sending notification: %o', error);
         }
     }
 }

@@ -1,5 +1,8 @@
-const axios = require('axios');
 require('dotenv').config();
+const axios = require('axios');
+const createLoggerWithFilename = require('./logService'); // Import the logger
+const logger = createLoggerWithFilename(__filename);
+
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY; // Make sure this is set in your .env file
 
 // Fetch motivational quote from OpenAI
@@ -33,11 +36,11 @@ async function fetchMotivationalQuote(name, gender, age, occupation, language, s
     if (response.data.choices && response.data.choices.length > 0) {
       return response.data.choices[0].message.content.trim();
     } else {
-      console.warn('No choices returned from API.');
+      logger.warn('No choices returned from API.');
       return 'Stay motivated!';
     }
   } catch (error) {
-    console.error('Error fetching quote:', error);
+    logger.error('Error fetching quote: %o', error);
     return 'Stay motivated!';
   }
 }
