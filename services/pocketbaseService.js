@@ -78,7 +78,6 @@ async function getAllRecords(collectionName) {
         const records = await client.collection(collectionName).getFullList({
             sort: '-created',
         });
-        logger.info('Fetched records: %o', records);
         return records;
     } catch (error) {
         logger.error('Error fetching records: %o', error);
