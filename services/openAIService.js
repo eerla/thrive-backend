@@ -8,7 +8,7 @@ async function fetchMotivationalQuote(name, gender, age, occupation, language, s
         gender = '';
     }
 
-  const prompt = `Generate a ${style} style motivational quote for a person with name${name}, ${age}-year-old ${gender} ${occupation} who speaks ${language}.`;
+  const prompt = `Generate a ${style} style motivational quote for a person with name ${name}, ${age}-year-old ${gender} ${occupation} who speaks ${language}.`;
 
   try {
     const response = await axios.post(
