@@ -2,7 +2,7 @@ require('dotenv').config();
 
 const express = require('express');
 const bodyParser = require('body-parser');
-const { sendNotificationsToUsers, registerUser, scheduleDailyNotifications } = require('./notifications/notificationService');
+const { sendNotificationsToUsers, registerUser, scheduleDailyNotifications, updateUser } = require('./notifications/notificationService');
 const createLoggerWithFilename = require('./services/logService');
 
 const logger = createLoggerWithFilename(__filename);
@@ -20,6 +20,20 @@ app.post('/register', async (req, res) => {
         res.send(message);
     } catch (error) {
         logger.error('Error in user registration: %o', error);
+        res.status(400).send(error.message);
+    }
+});
+
+
+// Endpoint to update user data
+app.put('/update', async (req, res) => {
+    const { token, name, gender, age, occupation, language, frequency } = req.body;
+
+    try {
+        const message = await updateUser(td_collection_id, token, name, gender, age, occupation, language, frequency);
+        res.send(message);
+    } catch (error) {
+        logger.error('Error updating user data: %o', error);
         res.status(400).send(error.message);
     }
 });

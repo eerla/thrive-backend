@@ -52,7 +52,6 @@ async function createNotificationPromises(users) {
                 reason: error.message
             }));
         } else {
-            console.log('in else case')
             return {
                 status: 'rejected',
                 user,
@@ -64,7 +63,6 @@ async function createNotificationPromises(users) {
 
 // Function to handle notification results
 async function handleNotificationResults(results) {
-    console.log(results)
     for (const result of results) {
         if (result.status === 'fulfilled' && result.value == undefined) {
             logger.info(`Notification sent successfully`);
@@ -84,11 +82,10 @@ async function handleNotificationResults(results) {
 async function sendNotificationsToUsers() {
     logger.info('Fetching users from PocketBase...');
     const users = await getAllRecords(td_collection_id);
-
     if (users.length === 0) {
         const msg = 'No users registered for notifications.';
         logger.info(msg);
-        return res.send(msg);
+        return msg;
     }
     const notificationPromises = await createNotificationPromises(users);
     const results = await Promise.allSettled(notificationPromises);
@@ -105,15 +102,32 @@ async function registerUser(collectionName, token, name, gender, age, occupation
     }
 
     try {
+        await createRecord(collectionName, data);
+        logger.info('User data saved successfully for token: %s', token);
+        await sendMotivationalQuoteNotification(token, name, gender, age, occupation, language);
+        logger.info('Notification sent for token: %s', token);
+        return 'User data saved successfully and notification sent!';
+    } catch (error) {
+        logger.error('Error saving user data: %o', error);
+        throw new Error('Failed to save user data');
+    }
+}
+
+async function updateUser(collectionName, token, name, gender, age, occupation, language, frequency) {
+    const data = { token, name, gender, age, occupation, language, frequency };
+
+    if (!Expo.isExpoPushToken(token)) {
+        logger.info('Invalid Expo push token received');
+        throw new Error('Invalid Expo push token');
+    }
+
+    try {
         await updateRecord(collectionName, data);
         logger.info('User data updated successfully for token: %s', token);
-        return 'User data updated successfully';
+        return 'User data updated successfully!';
     } catch (error) {
-        logger.info('User not found, creating new user record...');
-        await createRecord(collectionName, data);
-        await sendMotivationalQuoteNotification(token, name, gender, age, occupation, language);
-        logger.info('User data saved and notification sent for token: %s', token);
-        return 'User data saved successfully and notification sent!';
+        logger.error('Error updating user data: %o', error);
+        throw new Error('Failed to update user data');
     }
 }
 
@@ -132,4 +146,4 @@ function scheduleDailyNotifications() {
     logger.info('Daily notification job scheduled at 11 PM');
 }
 
-module.exports = { sendNotificationsToUsers, registerUser, scheduleDailyNotifications };
+module.exports = { sendNotificationsToUsers, registerUser, scheduleDailyNotifications, updateUser };
