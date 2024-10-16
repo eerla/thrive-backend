@@ -1,10 +1,9 @@
-// load environment variables
 require('dotenv').config();
-const createLoggerWithFilename = require('./logService'); // Import the logger
+const createLoggerWithFilename = require('./logService');
 const logger = createLoggerWithFilename(__filename);
 let PocketBase;
 let client;
-let pb_collection_id = process.env.POCKETBASE_COLLECTION_ID;
+
 // Function to initialize PocketBase
 async function initializePocketBase() {
     if (!PocketBase) {
@@ -12,20 +11,19 @@ async function initializePocketBase() {
         client = new PocketBase(process.env.POCKETBASE_URL);
         logger.info('PocketBase initialized');
         await client.admins.authWithPassword(process.env.POCKETBASE_ADMIN_USERNAME, process.env.POCKETBASE_ADMIN_PASSWORD);
-        logger.info('admin authenticated');
+        logger.info('Admin authenticated');
     }
 }
 
-const sliceString = (token) => {
-    return token.slice(25,40);
-}
+const sliceString = (token) => token.slice(25, 40);
+
 // Function to create a new record
-async function createRecord(data) {
-    await initializePocketBase(); // Ensure PocketBase is initialized
+async function createRecord(collectionName, data) {
+    await initializePocketBase();
     try {
-        const recordId = sliceString(data.token); // Use last 15 characters of the token as the record ID
-        const record = await client.collection(pb_collection_id).create({ id: recordId, token_x_user: data });
-        logger.info('Record created: %o', record);
+        const recordId = sliceString(data.token);
+        const record = await client.collection(collectionName).create({ id: recordId, token_x_user: data });
+        logger.info('Record created: %o', record.id);
         return record;
     } catch (error) {
         logger.error('Error creating record: %o', error);
@@ -33,38 +31,36 @@ async function createRecord(data) {
 }
 
 // Function to update an existing record
-async function updateRecord(data) {
-    await initializePocketBase(); // Ensure PocketBase is initialized
+async function updateRecord(collectionName, data) {
+    await initializePocketBase();
     try {
-        const recordId = sliceString(data.token); // Use last 15 characters of the token as the record ID
-        const record = await client.collection(pb_collection_id).update(recordId, { token_x_user: data });
-        
+        const recordId = sliceString(data.token);
+        const record = await client.collection(collectionName).update(recordId, { token_x_user: data });
         logger.info('Record updated: %o', record.id);
         return record;
     } catch (error) {
         if (error instanceof PocketBase.ClientResponseError && error.status === 404) {
             logger.warn('Record not found, attempting to create a new record: %o', error);
             try {
-                
-                const newRecord = await createRecord(data);
+                const newRecord = await createRecord(collectionName, data);
                 return newRecord;
             } catch (createError) {
                 logger.error('Error creating record after update failed: %o', createError);
-                throw createError; // Re-throw the error to handle it further up the call stack
+                throw createError;
             }
         } else {
             logger.error('Error updating record: %o', error);
-            throw error; // Re-throw the error to handle it further up the call stack
+            throw error;
         }
     }
 }
 
-// Function to delete a record
-async function deleteRecord(data) {
-    await initializePocketBase(); // Ensure PocketBase is initialized
+// Function to delete a record by token
+async function deleteRecord(collectionName, data) {
+    await initializePocketBase();
     try {
-        const recordId = sliceString(data.token); // Use last 15 characters of the token as the record ID
-        await client.collection(pb_collection_id).delete(recordId);
+        const recordId = sliceString(data.token);
+        await client.collection(collectionName).delete(recordId);
         logger.info('Record deleted: %o', recordId);
     } catch (error) {
         logger.error('Error deleting record: %o', error);
@@ -73,7 +69,7 @@ async function deleteRecord(data) {
 
 // Function to fetch all records from a collection
 async function getAllRecords(collectionName) {
-    await initializePocketBase(); // Ensure PocketBase is initialized
+    await initializePocketBase();
     try {
         const records = await client.collection(collectionName).getFullList({
             sort: '-created',
@@ -84,4 +80,16 @@ async function getAllRecords(collectionName) {
     }
 }
 
-module.exports = { createRecord, updateRecord, deleteRecord, getAllRecords };
+// Function to create a new record
+async function createFailedRecord(collectionName, data) {
+    await initializePocketBase();
+    try {
+        const record = await client.collection(collectionName).create({ token_x_user:data.token_x_user, reason:data.reason });
+        logger.info('Failed promise is recorded: %o', record);
+        return record;
+    } catch (error) {
+        logger.error('Error recording failed promise: %o', error);
+    }
+}
+
+module.exports = { createRecord, updateRecord, deleteRecord, getAllRecords, createFailedRecord };
