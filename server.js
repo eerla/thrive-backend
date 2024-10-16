@@ -2,9 +2,10 @@ require('dotenv').config();
 
 const express = require('express');
 const bodyParser = require('body-parser');
-const { sendNotificationsToUsers, registerUser, scheduleDailyNotifications, updateUser } = require('./notifications/notificationService');
+const { sendNotificationsToUsers } = require('./notifications/notificationService');
+const { registerUser, updateUser } = require('./services/userService');
 const createLoggerWithFilename = require('./services/logService');
-
+const { scheduleDailyNotifications } = require('./services/scheduler')
 const logger = createLoggerWithFilename(__filename);
 const app = express();
 app.use(bodyParser.json());

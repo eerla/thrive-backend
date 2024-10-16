@@ -36,20 +36,20 @@ async function updateRecord(collectionName, data) {
     try {
         const recordId = sliceString(data.token);
         const record = await client.collection(collectionName).update(recordId, { token_x_user: data });
-        logger.info('Record updated: %o', record.id);
+        logger.info(`Record updated: ${record.id}`);
         return record;
     } catch (error) {
-        if (error instanceof PocketBase.ClientResponseError && error.status === 404) {
-            logger.warn('Record not found, attempting to create a new record: %o', error);
+        if (error.status === 404) {
+            logger.warn('Record not found, attempting to create a new recod');
             try {
                 const newRecord = await createRecord(collectionName, data);
                 return newRecord;
             } catch (createError) {
-                logger.error('Error creating record after update failed: %o', createError);
+                logger.error(`Error creating record after update failed: ${createError}`);
                 throw createError;
             }
         } else {
-            logger.error('Error updating record: %o', error);
+            logger.error(`Error updating record: ${error}`);
             throw error;
         }
     }
@@ -72,7 +72,7 @@ async function getAllRecords(collectionName) {
     await initializePocketBase();
     try {
         const records = await client.collection(collectionName).getFullList({
-            sort: '-created',
+            filter: 'token_x_user != null',
         });
         return records;
     } catch (error) {
