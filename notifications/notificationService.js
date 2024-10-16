@@ -96,11 +96,11 @@ async function handleNotificationResults(results) {
             });
         }
     }
-    logger.info('Finished processing notifications.');
+    logger.info('Finished sending notifications.');
 
     // Process receipts only for successfully sent notifications
     if (successfulTickets.length > 0) {
-        logger.info('processing receipts...')
+        logger.info('processing notifications receipts...')
         await processNotificationReceipts(successfulTickets);
     }
 }
@@ -114,10 +114,10 @@ async function processNotificationReceipts(tickets) {
                 const receipt = await expo.getPushNotificationReceiptsAsync([receiptId]);
                 const status = receipt[receiptId].status;
                 if (status === 'ok') {
-                    logger.info(`Notification sent successfully`);
+                    logger.info(`Notification delived to device successfully`);
                     return { status: 'ok', token: ticket.to };
                 } else if (status === 'error') {
-                    logger.error(`Error sending notification to token: ${ticket.to}. Reason: ${receipt[receiptId].message}`);
+                    logger.error(`Error sending notification to device: ${ticket.to}. Reason: ${receipt[receiptId].message}`);
                     return {
                         status: 'error',
                         token: ticket.to,
@@ -140,6 +140,7 @@ async function processNotificationReceipts(tickets) {
 
 // Function to handle receipt results
 async function handleReceiptResults(results) {
+    logger.info('processing delivered promises to handle unregistered devices...')
     for (const result of results) {
         if (result.status === 'ok') {
             logger.info(`Notification sent successfully!`);
