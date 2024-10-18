@@ -1,4 +1,5 @@
 require('dotenv').config();
+const config = require('../config/config');
 const { Expo } = require('expo-server-sdk');
 const { fetchMotivationalQuote } = require('../services/openAIService');
 const { getAllRecords, createFailedRecord } = require('../services/pocketbaseService');
@@ -6,8 +7,8 @@ const createLoggerWithFilename = require('../services/logService');
 
 const logger = createLoggerWithFilename(__filename);
 const expo = new Expo();
-const fp_collection_id = process.env.FP_COLLECTION_ID;
-const td_collection_id = process.env.TD_COLLECTION_ID;
+const fp_collection_id = config.fpCollectionId;
+const td_collection_id = config.tdCollectionId;
 
 async function sendNotificationsToUsers() {
     logger.info('Fetching users from PocketBase...');
@@ -30,6 +31,7 @@ async function sendNotificationsToUsers() {
     const notificationResults = await Promise.allSettled(notificationPromises);
 
     // Count successfully sent and failed to send notifications
+    logger.info('Processing notification sent promises')
     for (const result of notificationResults) {
         if (result.status === 'fulfilled' && result.value) {
             sentCount += result.value.length; // Assuming result.value is an array of tickets
@@ -47,24 +49,26 @@ async function sendNotificationsToUsers() {
     logger.info(`Notifications successfully sent: ${sentCount}`);
     logger.info(`Notifications failed to send: ${failedToSendCount}`);
 
+    logger.info('Processing delivered promises...')
     const successfulTickets = notificationResults
         .filter(result => result.status === 'fulfilled' && result.value)
         .flatMap(result => result.value);
 
+
+
     if (successfulTickets.length > 0) {
         const receiptResults = await processNotificationReceipts(successfulTickets);
-
+        
         // Count successfully delivered and failed to deliver notifications
         receiptResults.forEach(result => {
             if (result.status === 'ok') {
-                logger.info(`Notification delivered successfully!`);
                 deliveredCount++;
             } else {
                 failedToDeliverCount++;
 
                 if (result.status === 'error') {
                     logger.error(`Failed to send notification to token: ${result.token}. Reason: ${result.reason}`);
-        
+
                     if (result.reason.includes('Invalid') || result.reason.includes('DeviceNotRegistered')) {
                         // Token is invalid or device is not registered, remove the token from the database
                         async function handleInvalidToken(result) {
@@ -114,7 +118,7 @@ async function createNotificationPromises(users) {
 
 // Function to fetch motivational quote and send notification
 async function sendMotivationalQuoteNotification(token, name, gender, age, occupation, language) {
-    logger.info('Calling OpenAI service...');
+    logger.info('Fetching Motivational quotes...');
     const quote = await fetchMotivationalQuote(name, gender, age, occupation, language);
 
     const message = {
@@ -147,6 +151,7 @@ async function processNotificationReceipts(tickets) {
             try {
                 const receiptId = ticket.id;
                 const receipt = await expo.getPushNotificationReceiptsAsync([receiptId]);
+                
                 const status = receipt[receiptId].status;
                 if (status === 'ok') {
                     logger.info(`Notification delivered successfully`);

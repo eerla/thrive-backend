@@ -1,23 +1,31 @@
 require('dotenv').config();
+const config = require('../config/config');
 const axios = require('axios');
 const createLoggerWithFilename = require('./logService');
 const logger = createLoggerWithFilename(__filename);
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const stylesArray = config.styles.split(',');
 
+// Function to get a random style from the stylesArray
+function getRandomStyle() {
+    const randomIndex = Math.floor(Math.random() * stylesArray.length);
+    return stylesArray[randomIndex];
+}
 // Fetch motivational quote from OpenAI
-async function fetchMotivationalQuote(name, gender, age, occupation, language, style = 'jim rohn') {
+async function fetchMotivationalQuote(name, gender, age, occupation) {
     if (gender === 'Neutral') {
         gender = '';
     }
+    const style = getRandomStyle();
 
-    const prompt = `Generate a ${style} style motivational quote for a person with name ${name}, ${age}-year-old ${gender} ${occupation} who speaks ${language}.`;
+    const prompt = `Generate a ${style} style motivational quote for a person with name ${name}, ${age}-year-old ${gender} ${occupation}.`;
 
     try {
         const response = await axios.post(
-            'https://api.openai.com/v1/chat/completions',
+            config.openAI_URL,
             {
-                model: 'gpt-3.5-turbo',
+                model: config.openAIModel,
                 messages: [
                     { role: 'system', content: 'You are an assistant that generates motivational quotes.' },
                     { role: 'user', content: prompt }

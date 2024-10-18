@@ -1,5 +1,5 @@
 require('dotenv').config();
-
+const config = require('./config/config');
 const express = require('express');
 const bodyParser = require('body-parser');
 const { sendNotificationsToUsers } = require('./notifications/notificationService');
@@ -10,13 +10,14 @@ const logger = createLoggerWithFilename(__filename);
 const app = express();
 app.use(bodyParser.json());
 
-const td_collection_id = process.env.TD_COLLECTION_ID;
+const td_collection_id = config.tdCollectionId;
 
 // Endpoint to register the device token and save/update user data
 app.post('/register', async (req, res) => {
     const { token, name, gender, age, occupation, language, frequency } = req.body;
 
     try {
+        logger.info('Registering new user...')
         const message = await registerUser(td_collection_id, token, name, gender, age, occupation, language, frequency);
         res.send(message);
     } catch (error) {
@@ -31,6 +32,7 @@ app.put('/update', async (req, res) => {
     const { token, name, gender, age, occupation, language, frequency } = req.body;
 
     try {
+        logger.info('Updating user details...')
         const message = await updateUser(td_collection_id, token, name, gender, age, occupation, language, frequency);
         res.send(message);
     } catch (error) {
@@ -55,6 +57,6 @@ app.post('/send-notification', async (req, res) => {
 scheduleDailyNotifications();
 
 // Start the server
-app.listen(process.env.PORT, () => {
-    logger.info('Server running on port %s', process.env.PORT);
+app.listen(config.port, () => {
+    logger.info('Server running on port %s', config.port);
 });

@@ -1,4 +1,5 @@
 require('dotenv').config();
+const config = require('../config/config');
 const createLoggerWithFilename = require('./logService');
 const logger = createLoggerWithFilename(__filename);
 let PocketBase;
@@ -8,7 +9,7 @@ let client;
 async function initializePocketBase() {
     if (!PocketBase) {
         PocketBase = (await import('pocketbase')).default;
-        client = new PocketBase(process.env.POCKETBASE_URL);
+        client = new PocketBase(config.pocketbaseUrl);
         logger.info('PocketBase initialized');
         await client.admins.authWithPassword(process.env.POCKETBASE_ADMIN_USERNAME, process.env.POCKETBASE_ADMIN_PASSWORD);
         logger.info('Admin authenticated');
@@ -26,7 +27,13 @@ async function createRecord(collectionName, data) {
         logger.info('Record created: %o', record.id);
         return record;
     } catch (error) {
-        logger.error('Error creating record: %o', error);
+        if (error.response && error.response.code === 400 && error.response.data.id.message.includes('The model id is invalid or already exists')) {
+            logger.info(`Record already exists for id: ${sliceString(data.token)}`);
+            return null; // Return null or a specific value to indicate the record already exists
+        } else {
+            logger.error('Error creating record: %o', error);
+            throw error; // Re-throw the error if it's not the specific case
+        }
     }
 }
 
@@ -39,19 +46,8 @@ async function updateRecord(collectionName, data) {
         logger.info(`Record updated: ${record.id}`);
         return record;
     } catch (error) {
-        if (error.status === 404) {
-            logger.warn('Record not found, attempting to create a new recod');
-            try {
-                const newRecord = await createRecord(collectionName, data);
-                return newRecord;
-            } catch (createError) {
-                logger.error(`Error creating record after update failed: ${createError}`);
-                throw createError;
-            }
-        } else {
-            logger.error(`Error updating record: ${error}`);
-            throw error;
-        }
+        logger.error(`Error updating record: ${error}`);
+        throw error;
     }
 }
 
