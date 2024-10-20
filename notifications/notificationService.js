@@ -218,11 +218,11 @@ const ur_collection_id = config.urCollectionId;
 async function sendNotifications() {
     logger.info('Preparing batch request file for all users...')
     const input_file_name = await createBatchRequestFile();
-    logger.info(`Initiating bulk notification process with file : ${input_file_name}...`)
-    // const input_data_file = input_file_name;
+    logger.info(`Initiating bulk notification process with file : ${input_file_name}`)
+    await new Promise(resolve => setTimeout(resolve, 10000));
     // const final_messages = await makeBatchApiCall(input_file_name);
 
-    const final_messages = [{"custom_id":"ExponentPushToken[ZHFeXSD0dyCE7N3Om3rxx1]","message":"Test2, remember that the journey of an engineer is crafted not only in the precision of your designs but in the discipline to learn from every failure, the creativity to envision the impossible, and the respect for your roots that fuels your growth. Persevere with purpose, for in every challenge, you’re not just building structures, but the foundation of your legacy."},{"custom_id":"ExponentPushToken[rWrSnjKhftL_oA5t8mmQx2]","message":"Gurubrahma, remember that every challenge you face as an engineer is a canvas awaiting your creativity; with discipline as your brush and perseverance as your palette, paint a future that honors your family, respects your ethics, and showcases the strength of your journey."}]
+    const final_messages = [{"custom_id":"ExponentPushToken[ZHFeXSD0dyCE7N3Om3rxx01]","message":"Test2, remember that every challenge is a stepping stone—embrace creativity and discipline as your tools, and let your family's values guide you. In the pursuit of your dreams, accountability will be your compass, leading you to a future where your potential knows no bounds."},{"custom_id":"ExponentPushToken[rWrSnjKhftL_oA5t8mmQx21]","message":"Eerla, remember that every challenge you face as an engineer is a brushstroke on the canvas of your life; with discipline, creativity, and unwavering respect for those who support you, you can transform obstacles into masterpieces of growth and accountability."}]
     // Create the messages array
     let messages = [];
 
@@ -332,35 +332,26 @@ async function sendNotifications() {
                 if (status === 'ok') {
                     logger.info(`Notification delivered successfully for id : ${receiptId}`);
                     messagesDeliveredCount++;
-                    return { status: 'ok' };
                 } else if (status === 'error') {
                     messagesUnDeliveredCount++;
                     logger.error(`Error delivering notification. Reason: ${receipt[receiptId].message}`);
                     logger.error(`Details: ${receipt[receiptId].details}`);
                     logger.info('logging to pocketBase...')
-                    // details is json with expo_token and error like below?
                     await createUnregisteredRecord(ur_collection_id, {
                         expo_token: ticket.details.expoPushToken,
                         reason: ticket.message,
                         error: ticket.details.error
                     });
                     logger.info('Completed logging')
-
-                    return {
-                        status: receipt[receiptId].status,
-                        details: receipt[receiptId].details,
-                        reason: receipt[receiptId].message,
-                        };
-                    }
-
-                    logger.info(`Notifications successfully delivered: ${messagesDeliveredCount}`);
-                    logger.info(`Notifications failed to deliver: ${messagesUnDeliveredCount}`);
-                    
-                } catch (error) {
-                    logger.error('Error retrieving receipt: ', error);
-                    return { status: 'error', token: ticket.id, reason: 'Receipt retrieval failed', receipt_error: receipt.errors };
                 }
+            } catch (error) {
+                logger.error('Error retrieving receipt: ', error);
+                messagesUnDeliveredCount++;
             }
+        }
+
+        logger.info(`Notifications successfully delivered: ${messagesDeliveredCount}`);
+        logger.info(`Notifications failed to deliver: ${messagesUnDeliveredCount}`);
         }
 
         logger.info('Bulk notifications are sent and processed successfully!');
@@ -368,14 +359,4 @@ async function sendNotifications() {
 }
 
 
-// async function removeTokenFromDatabase(token) {
-//     // Logic to remove the token from the database or mark it as inactive
-//     // Example: await updateRecord(td_collection_id, { token: null }, { token });
-//     // move to thrive_data_unregistered and delete from main
-//     logger.info(`Token ${token} removed from the database.`);
-// }
-
-module.exports = { 
-    // sendNotificationsToUsers, 
-    // sendMotivationalQuoteNotification, 
-    sendNotifications };
+module.exports = { sendNotifications };

@@ -70,7 +70,7 @@ async function getAllRecords(collectionName, filter='') {
         const records = await client.collection(collectionName).getFullList({
             filter: filter,
         });
-        
+
         logger.info('filtering unregistered tokens..')
         const unregistered_tokens = await client.collection('unregistered_tokens').getFullList({
             sort: '-created',
@@ -111,7 +111,7 @@ async function createUnregisteredRecord(collectionName, data) {
             reason: data.reason, 
             error: data.error 
         });
-        logger.info('Record created: %o', record.id);
+        logger.info('Undelivered record created: %o', record.id);
         return record;
     } catch (error) {
         if (error.response && error.response.code === 400 && error.response.data.id.message.includes('The model id is invalid or already exists')) {
