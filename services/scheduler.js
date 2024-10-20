@@ -7,17 +7,17 @@ const logger = createLoggerWithFilename(__filename);
 
 // Function to schedule the daily notification job
 function scheduleDailyNotifications() {
-    cron.schedule('0 23 * * *', async () => {
+    cron.schedule('0 4 * * *', async () => {
         logger.info('Running daily notification job at 11 PM...');
         try {
-            await fetch('http://localhost:3000/send-notification', { method: 'POST' });
+            await fetch('http://localhost:3000/send-notification-v2', { method: 'POST' });
             logger.info('Notifications sent successfully!');
         } catch (error) {
             logger.error('Error sending notifications: %o', error);
         }
     });
 
-    logger.info('Daily notification job scheduled at 11 PM');
+    logger.info('Daily notification job scheduled at 4 AM');
 }
 
 // Function to poll batch call retriever 

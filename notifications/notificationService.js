@@ -220,9 +220,9 @@ async function sendNotifications() {
     const input_file_name = await createBatchRequestFile();
     logger.info(`Initiating bulk notification process with file : ${input_file_name}`)
     await new Promise(resolve => setTimeout(resolve, 10000));
-    // const final_messages = await makeBatchApiCall(input_file_name);
+    const final_messages = await makeBatchApiCall(input_file_name);
 
-    const final_messages = [{"custom_id":"ExponentPushToken[ZHFeXSD0dyCE7N3Om3rxx01]","message":"Test2, remember that every challenge is a stepping stone—embrace creativity and discipline as your tools, and let your family's values guide you. In the pursuit of your dreams, accountability will be your compass, leading you to a future where your potential knows no bounds."},{"custom_id":"ExponentPushToken[rWrSnjKhftL_oA5t8mmQx21]","message":"Eerla, remember that every challenge you face as an engineer is a brushstroke on the canvas of your life; with discipline, creativity, and unwavering respect for those who support you, you can transform obstacles into masterpieces of growth and accountability."}]
+    // const final_messages = [{"custom_id":"ExponentPushToken[ZHFeXSD0dyCE7N3Om3rxx01]","message":"Test2, remember that every challenge is a stepping stone—embrace creativity and discipline as your tools, and let your family's values guide you. In the pursuit of your dreams, accountability will be your compass, leading you to a future where your potential knows no bounds."},{"custom_id":"ExponentPushToken[rWrSnjKhftL_oA5t8mmQx21]","message":"Eerla, remember that every challenge you face as an engineer is a brushstroke on the canvas of your life; with discipline, creativity, and unwavering respect for those who support you, you can transform obstacles into masterpieces of growth and accountability."}]
     // Create the messages array
     let messages = [];
 
