@@ -3,6 +3,7 @@ module.exports = {
     pocketbaseUrl: "https://thrive.pockethost.io",
     tdCollectionId: "thrive_data",
     fpCollectionId: "failed_promises",
+    urCollectionId: "unregistered_tokens",
     port: 3000,
     input_data_file: 'app_data/batchinput.jsonl',
     openAI_URL: 'https://api.openai.com',

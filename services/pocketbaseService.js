@@ -88,4 +88,29 @@ async function createFailedRecord(collectionName, data) {
     }
 }
 
-module.exports = { createRecord, updateRecord, deleteRecord, getAllRecords, createFailedRecord };
+// Function to create a new record
+async function createUnregisteredRecord(collectionName, data) {
+    await initializePocketBase();
+
+    try {
+        const recordId = sliceString(data.expo_token);
+        const record = await client.collection(collectionName).create({ 
+            id: recordId, 
+            expo_token: data.expo_token, 
+            reason: data.reason, 
+            error: data.error 
+        });
+        logger.info('Record created: %o', record.id);
+        return record;
+    } catch (error) {
+        if (error.response && error.response.code === 400 && error.response.data.id.message.includes('The model id is invalid or already exists')) {
+            logger.info(`Record already exists for id: ${sliceString(data.expo_token)}`);
+            return null; // Return null or a specific value to indicate the record already exists
+        } else {
+            logger.error('Error creating record: %o', error);
+            throw error; // Re-throw the error if it's not the specific case
+        }
+    }
+}
+
+module.exports = { createRecord, updateRecord, deleteRecord, getAllRecords, createFailedRecord, createUnregisteredRecord };

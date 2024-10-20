@@ -2,13 +2,14 @@ require('dotenv').config();
 const config = require('../config/config');
 const { Expo } = require('expo-server-sdk');
 const { fetchMotivationalQuote, makeBatchApiCall } = require('../services/openAIService');
-const { getAllRecords, createFailedRecord } = require('../services/pocketbaseService');
+const { getAllRecords, createFailedRecord, createUnregisteredRecord } = require('../services/pocketbaseService');
 const createLoggerWithFilename = require('../services/logService');
 
 const logger = createLoggerWithFilename(__filename);
 const expo = new Expo();
 const fp_collection_id = config.fpCollectionId;
 const td_collection_id = config.tdCollectionId;
+const ur_collection_id = config.urCollectionId;
 
 async function sendNotificationsToUsers() {
     logger.info('Fetching users from PocketBase...');
@@ -182,7 +183,7 @@ async function sendNotifications() {
     const input_data_file = config.input_data_file;
     // const final_messages = await makeBatchApiCall(input_data_file);
 
-    const final_messages = [{"custom_id":"ExponentPushToken[ZHFeXSD0dyCE7N3Om3rxx0]","message":"Test2, remember that the journey of an engineer is crafted not only in the precision of your designs but in the discipline to learn from every failure, the creativity to envision the impossible, and the respect for your roots that fuels your growth. Persevere with purpose, for in every challenge, you’re not just building structures, but the foundation of your legacy."},{"custom_id":"ExponentPushToken[rWrSnjKhftL_oA5t8mmQx2]","message":"Gurubrahma, remember that every challenge you face as an engineer is a canvas awaiting your creativity; with discipline as your brush and perseverance as your palette, paint a future that honors your family, respects your ethics, and showcases the strength of your journey."}]
+    const final_messages = [{"custom_id":"ExponentPushToken[ZHFeXSD0dyCE7N3Om3rxx1]","message":"Test2, remember that the journey of an engineer is crafted not only in the precision of your designs but in the discipline to learn from every failure, the creativity to envision the impossible, and the respect for your roots that fuels your growth. Persevere with purpose, for in every challenge, you’re not just building structures, but the foundation of your legacy."},{"custom_id":"ExponentPushToken[rWrSnjKhftL_oA5t8mmQx2]","message":"Gurubrahma, remember that every challenge you face as an engineer is a canvas awaiting your creativity; with discipline as your brush and perseverance as your palette, paint a future that honors your family, respects your ethics, and showcases the strength of your journey."}]
     // Create the messages array
     let messages = [];
 
@@ -218,35 +219,52 @@ async function sendNotifications() {
         }
     }
 
-    logger.info(`guru tickets: ${JSON.stringify(tickets)}`)
+    // logger.info(`Notification tickets: ${JSON.stringify(tickets)}`)
     
     const successfulTickets = tickets.filter(result => result.status === 'ok');
+    const UnsuccessfulTickets = tickets.filter(result => result.status === 'error');
 
     logger.info(`Notifications successfully sent: ${successfulTickets.length}`)
     logger.info(`Notifications failed to send: ${tickets.length - successfulTickets.length}`)
     
+    // process notifications
     if (successfulTickets.length > 0) {
         logger.info('Processing pushed notifications...')
         let messagesDeliveredCount = 0;
         let messagesUnDeliveredCount = 0;
         const receiptResults = await processNotificationReceipts(successfulTickets);
         
-        console.log(`guru receipt results: ${JSON.stringify(receiptResults)}`)
+        console.log(`Delivery receipts: ${JSON.stringify(receiptResults)}`)
         // Count successfully delivered and failed to deliver notifications
         receiptResults.forEach(result => {
             if (result.status === 'ok') {
                 messagesDeliveredCount++;
             } else {
+                // handle the result here, this is delivered or not
                 messagesUnDeliveredCount++;
+                logger.info(`Error delivering notification: ${result}`)
             }
         });
 
         logger.info(`Notifications successfully delivered: ${messagesDeliveredCount}`);
         logger.info(`Notifications failed to deliver: ${messagesUnDeliveredCount}`);
-    } else {
-        logger.info('No successful tokens to process')
+    } 
+
+    // log unsuccessful (DeviceNotRegistered) tickets
+    if (UnsuccessfulTickets.length > 0) {
+        logger.info('logging failed to sent notifications..')
+        for (const ticket of UnsuccessfulTickets) {
+            await createUnregisteredRecord(ur_collection_id, {
+                expo_token: ticket.details.expoPushToken,
+                reason: ticket.message,
+                error: ticket.details.error
+            });
+        }
+        logger.info('completed saving failed notifications')
     }
+
 }
+
 
 async function removeTokenFromDatabase(token) {
     // Logic to remove the token from the database or mark it as inactive
