@@ -1,10 +1,19 @@
 // sample users model
-const user = {
+const users = [{
    token: 'ExpoPushToken[...]',
    name: 'John Doe',
     gender: 'Male',
     age: 25,
     occupation: 'Engineer',
     language: 'English',
-    frequency: 2
-}
+    frequency: 1
+},
+{
+   token: 'ExpoPushToken[...]',
+   name: 'mary',
+    gender: 'female',
+    age: 35,
+    occupation: 'Engineer',
+    language: 'English',
+    frequency: 1
+}]

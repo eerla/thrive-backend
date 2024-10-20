@@ -2,10 +2,12 @@ require('dotenv').config();
 const config = require('./config/config');
 const express = require('express');
 const bodyParser = require('body-parser');
-const { sendNotificationsToUsers } = require('./notifications/notificationService');
+const { sendNotificationsToUsers, sendNotifications } = require('./notifications/notificationService');
 const { registerUser, updateUser } = require('./services/userService');
 const createLoggerWithFilename = require('./services/logService');
 const { scheduleDailyNotifications } = require('./services/scheduler')
+const { makeBatchApiCall } = require('./services/openAIService');
+const { createBatchRequestFile } = require('./app_data/makeDataFile');
 const logger = createLoggerWithFilename(__filename);
 const app = express();
 app.use(bodyParser.json());
@@ -52,6 +54,44 @@ app.post('/send-notification', async (req, res) => {
         res.status(500).send('Failed to send notifications.');
     }
 });
+
+// Endpoint to send notifications
+app.post('/send-notification-v2', async (req, res) => {
+    try {
+        logger.info('Sending notifications to users busing batch api call...');
+        await sendNotifications();
+        res.send('Notifications processed successfully!');
+    } catch (error) {
+        logger.error('Error sending notifications: %o', error);
+        res.status(500).send('Failed to send notifications.');
+    }
+});
+
+// test end points
+// Endpoint to create batch request file in root folder to load into open ai
+app.post('/create-batch-request-file', async (req, res) => {
+    try {
+        logger.info('Creating batch request file...');
+        await createBatchRequestFile();
+        res.send('Batch request file created successfully!');
+    } catch (error) {
+        logger.error('Error creating batch request file: %o', error);
+        res.status(500).send('Failed to create batch request file.');
+    }
+});
+
+// Endpoint to trigger batch API call: loads batchinput file to openai and gets responses
+app.post('/batch-api-call', async (req, res) => {
+    try {
+        logger.info('Initiating batch API call...');
+        const response = await makeBatchApiCall(config.input_data_file);
+        res.send(response);
+    } catch (error) {
+        logger.error('Error during batch API call: %o', error);
+        res.status(500).send('Failed to make batch API call.');
+    }
+});
+
 
 // Schedule the job to run every day at 11 PM
 scheduleDailyNotifications();

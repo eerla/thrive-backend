@@ -1,7 +1,7 @@
 require('dotenv').config();
 const config = require('../config/config');
 const { Expo } = require('expo-server-sdk');
-const { fetchMotivationalQuote } = require('../services/openAIService');
+const { fetchMotivationalQuote, makeBatchApiCall } = require('../services/openAIService');
 const { getAllRecords, createFailedRecord } = require('../services/pocketbaseService');
 const createLoggerWithFilename = require('../services/logService');
 
@@ -177,6 +177,76 @@ async function processNotificationReceipts(tickets) {
     return await Promise.all(receiptPromises);
 }
 
+async function sendNotifications() {
+    logger.info('Initiating bulk notification process')
+    const input_data_file = config.input_data_file;
+    // const final_messages = await makeBatchApiCall(input_data_file);
+
+    const final_messages = [{"custom_id":"ExponentPushToken[ZHFeXSD0dyCE7N3Om3rxx0]","message":"Test2, remember that the journey of an engineer is crafted not only in the precision of your designs but in the discipline to learn from every failure, the creativity to envision the impossible, and the respect for your roots that fuels your growth. Persevere with purpose, for in every challenge, you’re not just building structures, but the foundation of your legacy."},{"custom_id":"ExponentPushToken[ZHFeXSD0dyCE7N3Om3rxx1]","message":"Test2, remember that every challenge you face as an engineer is a canvas awaiting your creativity; with discipline as your brush and perseverance as your palette, paint a future that honors your family, respects your ethics, and showcases the strength of your journey."}]
+    // Create the messages array
+    let messages = [];
+
+    logger.info('creating messages for notifications...')
+    for (let { custom_id, message } of final_messages) {
+        // Check if the custom_id is a valid Expo push token
+        if (!Expo.isExpoPushToken(custom_id)) {
+            console.error(`Push token ${custom_id} is not a valid Expo push token`);
+            continue;
+        }
+
+        // Construct a message
+        messages.push({
+            to: custom_id,
+            sound: 'default',
+            body: message,
+            data: { withSome: 'data' },
+        });
+    }
+
+    logger.info('Pushing notifications...')
+    // Chunk the messages to send them in batches
+    let chunks = expo.chunkPushNotifications(messages);
+    let tickets = [];
+
+    // Send the chunks
+    for (let chunk of chunks) {
+        try {
+            let ticketChunk = await expo.sendPushNotificationsAsync(chunk);
+            tickets.push(...ticketChunk);
+        } catch (error) {
+            logger.error(error);
+        }
+    }
+
+    logger.info(`guru tickets: ${JSON.stringify(tickets)}`)
+    
+    const successfulTickets = tickets.filter(result => result.status === 'ok');
+
+    logger.info(`Notifications successfully sent: ${successfulTickets.length}`)
+    logger.info(`Notifications failed to send: ${tickets.length - successfulTickets.length}`)
+    
+    if (successfulTickets.length > 0) {
+        logger.info('Processing pushed notifications...')
+        let messagesDeliveredCount = 0;
+        let messagesUnDeliveredCount = 0;
+        const receiptResults = await processNotificationReceipts(successfulTickets);
+        
+        console.log(`guru receipt results: ${JSON.stringify(receiptResults)}`)
+        // Count successfully delivered and failed to deliver notifications
+        receiptResults.forEach(result => {
+            if (result.status === 'ok') {
+                messagesDeliveredCount++;
+            } else {
+                messagesUnDeliveredCount++;
+            }
+        });
+
+        logger.info(`Notifications successfully delivered: ${messagesDeliveredCount}`);
+        logger.info(`Notifications failed to deliver: ${messagesUnDeliveredCount}`);
+    } else {
+        logger.info('No successful tokens to process')
+    }
+}
 
 async function removeTokenFromDatabase(token) {
     // Logic to remove the token from the database or mark it as inactive
@@ -185,4 +255,7 @@ async function removeTokenFromDatabase(token) {
     logger.info(`Token ${token} removed from the database.`);
 }
 
-module.exports = { sendNotificationsToUsers, sendMotivationalQuoteNotification };
+module.exports = { 
+    sendNotificationsToUsers, 
+    sendMotivationalQuoteNotification, 
+    sendNotifications };
