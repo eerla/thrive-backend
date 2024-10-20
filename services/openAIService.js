@@ -83,7 +83,7 @@ async function getFinalOutput(output_file_id) {
     return fileContents;
   }
 
-  async function retrieveBatch(batch_id) {
+async function retrieveBatch(batch_id) {
     let batch;
     const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
