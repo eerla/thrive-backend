@@ -10,52 +10,53 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const stylesArray = config.styles.split(',');
 
 // Function to get a random style from the stylesArray
-function getRandomStyle() {
-    const randomIndex = Math.floor(Math.random() * stylesArray.length);
-    return stylesArray[randomIndex];
-}
-// Fetch motivational quote from OpenAI
-async function fetchMotivationalQuote(name, gender, age, occupation) {
-    if (gender === 'Neutral') {
-        gender = '';
-    }
-    const style = getRandomStyle();
+// function getRandomStyle() {
+//     const randomIndex = Math.floor(Math.random() * stylesArray.length);
+//     return stylesArray[randomIndex];
+// }
+// // Fetch motivational quote from OpenAI
+// async function fetchMotivationalQuote(name, gender, age, occupation) {
+//     if (gender === 'Neutral') {
+//         gender = '';
+//     }
+//     const style = getRandomStyle();
 
-    const prompt = `Generate a ${style} style motivational quote for a person with name ${name}, ${age}-year-old ${gender} ${occupation}.`;
+//     const prompt = `Generate a ${style} style motivational quote for a person with name ${name}, ${age}-year-old ${gender} ${occupation}.`;
 
-    try {
-        const response = await axios.post(
-            `${config.openAI_URL}/v1/chat/completions`,
-            {
-                model: config.openAIModel,
-                messages: [
-                    { role: 'system', content: 'You are an assistant that generates motivational quotes.' },
-                    { role: 'user', content: prompt }
-                ],
-                max_tokens: 100,
-                temperature: 0.7
-            },
-            {
-                headers: {
-                    Authorization: `Bearer ${OPENAI_API_KEY}`,
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
+//     try {
+//         const response = await axios.post(
+//             `${config.openAI_URL}/v1/chat/completions`,
+//             {
+//                 model: config.openAIModel,
+//                 messages: [
+//                     { role: 'system', content: 'You are an assistant that generates motivational quotes.' },
+//                     { role: 'user', content: prompt }
+//                 ],
+//                 max_tokens: 100,
+//                 temperature: 0.7
+//             },
+//             {
+//                 headers: {
+//                     Authorization: `Bearer ${OPENAI_API_KEY}`,
+//                     'Content-Type': 'application/json'
+//                 }
+//             }
+//         );
 
-        if (response.data.choices && response.data.choices.length > 0) {
-            return response.data.choices[0].message.content.trim();
-        } else {
-            logger.warn('No choices returned from API.');
-            return 'Stay motivated!';
-        }
-    } catch (error) {
-        logger.error('Error fetching quote: %o', error);
-        return 'Stay motivated!';
-    }
-}
+//         if (response.data.choices && response.data.choices.length > 0) {
+//             return response.data.choices[0].message.content.trim();
+//         } else {
+//             logger.warn('No choices returned from API.');
+//             return 'Stay motivated!';
+//         }
+//     } catch (error) {
+//         logger.error('Error fetching quote: %o', error);
+//         return 'Stay motivated!';
+//     }
+// }
 
 // Function to fetch multiple motivational quotes in batch
+// Uploads a file to OpenAI for batch processing
 async function uploadFileToOpenAI(file_path) {
     const file = await openai.files.create({
       file: fs.createReadStream(file_path),
@@ -65,6 +66,7 @@ async function uploadFileToOpenAI(file_path) {
     return file
   }
 
+// Creates a batch process for a given file ID
 async function createBatch(file_id) {
     const batch = await openai.batches.create({
         input_file_id: file_id,
@@ -75,6 +77,7 @@ async function createBatch(file_id) {
     return batch;
 }
 
+// Retrieves the final output from OpenAI using the output file ID
 async function getFinalOutput(output_file_id) {
     logger.info(`Fetching file content using file id : ${output_file_id}`)
     const fileResponse = await openai.files.content(output_file_id);
@@ -83,6 +86,7 @@ async function getFinalOutput(output_file_id) {
     return fileContents;
   }
 
+// Continuously checks the status of a batch until it is completed
 async function retrieveBatch(batch_id) {
     let batch;
     const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -104,6 +108,7 @@ async function retrieveBatch(batch_id) {
     }
 }
 
+// Extracts messages from the response string
 function extractMessages(response) {
 
     logger.info('Extracting token and message from response...');
@@ -137,6 +142,7 @@ function extractMessages(response) {
     return final_messages;
 }
 
+// Orchestrates the batch API call process
 async function makeBatchApiCall(file_path) {
     try {
         logger.info(`Uploading ${file_path} to Open AI...`);
@@ -166,4 +172,4 @@ async function makeBatchApiCall(file_path) {
     }
 }
 
-module.exports = { fetchMotivationalQuote, makeBatchApiCall };
+module.exports = { makeBatchApiCall };

@@ -5,7 +5,7 @@ module.exports = {
     fpCollectionId: "failed_promises",
     urCollectionId: "unregistered_tokens",
     port: 3000,
-    input_data_file: 'app_data/batchinput.jsonl',
+    input_data_file: 'app_data/batchinput',
     openAI_URL: 'https://api.openai.com',
     openAIModel: "gpt-4o-mini",
     // openAIModel: 'gpt-3.5-turbo',

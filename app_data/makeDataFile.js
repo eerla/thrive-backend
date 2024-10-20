@@ -7,6 +7,7 @@ const logger = createLoggerWithFilename(__filename);
 const prompt_template = config.prompt_template;
 const td_collection_id = config.tdCollectionId;
 
+// Asynchronous function to fetch user details from PocketBase
 async function fetchUserDetails() {
     logger.info('Fetching users from PocketBase...');
         const users = await getAllRecords(td_collection_id, filter='token_x_user != null');
@@ -20,7 +21,7 @@ async function fetchUserDetails() {
         return users;
 };
 
-// const users = await fetchUserDetails();
+// Function to format prompts for each user and write to file
 function formatPromptForUsers(users, promptTemplate) {
     logger.info('Formatting prompts...')
     const formattedPrompts = users.map(usr => {
@@ -33,14 +34,20 @@ function formatPromptForUsers(users, promptTemplate) {
     });
 
     logger.info('creating batch input file...')
+    const now = new Date();
+    const timestamp = `${now.getFullYear()}_${String(now.getMonth() + 1).padStart(2, '0')}_${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}_${String(now.getMinutes()).padStart(2, '0')}_${String(now.getSeconds()).padStart(2, '0')}`;
+    const fileName = `${config.input_data_file}_${timestamp}.jsonl`;
     // Write each formatted prompt as a JSON line to 'batchinput.jsonl'
-    const fileStream = fs.createWriteStream('app_data/batchinput.jsonl');
+    const fileStream = fs.createWriteStream(fileName);
     formattedPrompts.forEach(prompt => {
         fileStream.write(JSON.stringify(prompt) + '\n');
     });
     fileStream.end();
+
+    return fileName;
 }
 
+// Asynchronous function to create a batch request file
 async function createBatchRequestFile() {
     const users = await fetchUserDetails();
 
@@ -49,10 +56,10 @@ async function createBatchRequestFile() {
         return;
     }
 
-    formatPromptForUsers(users, prompt_template)
+    const file_name = formatPromptForUsers(users, prompt_template)
     const timestamp = new Date().toISOString();
-    logger.info(`Batch Input file is created successfully at ${timestamp}`)
-
+    logger.info(`Batch Input file ${file_name} is created successfully at ${timestamp}`)
+    return file_name;
 }
 
 module.exports = {
