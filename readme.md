@@ -74,9 +74,65 @@ This project is a server application built using Node.js and Express that sends 
   - `200 OK`: Notifications sent successfully.
   - `500 Internal Server Error`: Failed to send notifications.
 
+### 3. Update User
+**URL**: `/update`
+**Method**: `PUT`
+**Description**: Updates a user's personal information.
+**Request Body**:
+- **Responses**:
+- ```json
+  {
+    "token": "ExpoPushToken[xxxxxxxxxxxxxxxxxxxxxx]",
+    "name": "John Doe",
+    "gender": "male",
+    "age": 30,
+    "occupation": "engineer",
+    "language": "English",
+    "frequency": "daily"
+  }
+  ```
+   - `200 OK`: User data updated successfully.
+   - `400 Bad Request`: Invalid Expo push token.
+
+
+### 4. Send Notification
+**URL**:` /send-notification`
+**Method**: `POST`
+**Description**: Sends motivational quote notifications to all registered users.
+**Responses:**
+   - `200 OK:` Notifications sent successfully.
+   - `500 Internal Server Error:` Failed to send notifications.
+
+### 5. Send Notification (Batch API Call)
+**URL:** `/send-notification-v2`
+**Method:** `POST`
+**Description:** Sends notifications using a batch API call for efficiency.
+**Responses:**
+   - `200 OK:` Notifications processed successfully.
+   - `500 Internal Server Error:` Failed to process notifications.
+
+### 6. Create Batch Request File
+**URL:** /create-batch-request-file
+**Method:** POST
+**Description:** Creates a batch request file for OpenAI API calls.
+**Responses:**
+   - `200 OK:` Batch request file created successfully.
+   - `500 Internal Server Error:` Failed to create batch request file.
+
+### 7. Batch API Call
+**URL:** `/batch-api-call`
+**Method:** `POST`
+**Description:** Triggers a batch API call to OpenAI.
+**Responses:**
+   - `200 OK:` Batch API call completed successfully.
+   - `500 Internal Server Error:` Failed to make batch API call.
+
+
 ## Scheduled Tasks
 
 - **Daily Notification Job**: A cron job is scheduled to run every day at 11 PM to send notifications to all registered users.
+- **Batch File Creation:** Scheduled to run every day at 1 AM to create a batch request file.
+  **Batch API Call Execution:** Scheduled to run every day at 2 AM to execute the batch API call.
 
 ## Technologies Used
 
@@ -86,6 +142,7 @@ This project is a server application built using Node.js and Express that sends 
 - **OpenAI API**: Used to generate motivational quotes.
 - **node-cron**: Library for scheduling tasks.
 - **axios**: HTTP client for making requests to the OpenAI API.
+- **PocketBase**: Backend service for managing user data.
 
 ## Error Handling
 
@@ -94,9 +151,7 @@ This project is a server application built using Node.js and Express that sends 
 
 ## Future Enhancements
 
-- Implement a database to persist user data.
-- Add more customization options for quotes.
-- Support for multiple languages and styles of quotes.
+- TO DO
 
 ## License
 
