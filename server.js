@@ -60,6 +60,7 @@ app.post('/send-notification-v2', async (req, res) => {
     try {
         logger.info('Sending notifications to users busing batch api call...');
         await sendNotifications();
+        logger.info('Completed sending notifications.')
         res.send('Notifications processed successfully!');
     } catch (error) {
         logger.error('Error sending notifications: %o', error);

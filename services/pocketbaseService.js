@@ -64,13 +64,24 @@ async function deleteRecord(collectionName, data) {
 }
 
 // Function to fetch all records from a collection
-async function getAllRecords(collectionName) {
+async function getAllRecords(collectionName, filter='') {
     await initializePocketBase();
     try {
         const records = await client.collection(collectionName).getFullList({
-            filter: 'token_x_user != null',
+            filter: filter,
         });
-        return records;
+        
+        logger.info('filtering unregistered tokens..')
+        const unregistered_tokens = await client.collection('unregistered_tokens').getFullList({
+            sort: '-created',
+        });
+
+        // Extract ids from pb_unregistered
+        const unregisteredIds = new Set(unregistered_tokens.map(unregistered => unregistered.id));
+        // Filter pb_users to remove objects with ids present in pb_unregistered
+        const validRecords = records.filter(user => !unregisteredIds.has(user.id));
+
+        return validRecords;
     } catch (error) {
         logger.error('Error fetching records: %o', error);
     }

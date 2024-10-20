@@ -13,7 +13,7 @@ const ur_collection_id = config.urCollectionId;
 
 async function sendNotificationsToUsers() {
     logger.info('Fetching users from PocketBase...');
-    const users = await getAllRecords(td_collection_id);
+    const users = await getAllRecords(td_collection_id, filter='token_x_user != null');
     const user_cnt = users.length;
     logger.info(`User count: ${user_cnt}`);
 
