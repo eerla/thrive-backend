@@ -22,8 +22,7 @@ async function fetchUserDetails() {
 
 // const users = await fetchUserDetails();
 function formatPromptForUsers(users, promptTemplate) {
-    console.log(promptTemplate)
-    console.log(users)
+    logger.info('Formatting prompts...')
     const formattedPrompts = users.map(usr => {
         const user = usr.token_x_user;
         const formattedPrompt = JSON.stringify(promptTemplate).replace(/\$\$(\w+)/g, (_, key) => {
@@ -33,6 +32,7 @@ function formatPromptForUsers(users, promptTemplate) {
         return JSON.parse(formattedPrompt);
     });
 
+    logger.info('creating batch input file...')
     // Write each formatted prompt as a JSON line to 'batchinput.jsonl'
     const fileStream = fs.createWriteStream('app_data/batchinput.jsonl');
     formattedPrompts.forEach(prompt => {
